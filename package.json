@@ -1,0 +1,14 @@
+{
+  "name": "namaste-node",
+  "version": "1.0.0",
+  "description": "DevTinder WebApp",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Praveen Udayagiri",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
