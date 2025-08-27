@@ -1,11 +1,12 @@
 const express = require("express");
 const app=express();
 
-app.use("/hello",(req,res)=>{
-    res.send("Hello fom hello");
+app.get("/user",(req,res)=>{
+    res.send({firstName:"Praveen",lastName:"Udayagiri"});
 })
-app.use("/test",(req,res)=>{
-    res.send("Hello from test");
+app.post("/user",(req,res)=>{
+    //logic for saving user data into Database
+    res.send("User added to DB sucessfully");
 })
 app.use("/",(req,res)=>{
     res.send("Hello Default");
