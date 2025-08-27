@@ -4,7 +4,7 @@ const isAdminAuth = (req,res,next)=>{
     if(!isAuth){
         res.status(403).send("Invalid Token");
     }
-    next();
+    else next();
 };
 
 const isUserinAuth = (req,res,next)=>{
@@ -13,7 +13,7 @@ const isUserinAuth = (req,res,next)=>{
     if(!isAuth){
         res.status(403).send("Invalid Token");
     }
-    next();
+    else next();
 }
 
 module.exports = {
