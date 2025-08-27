@@ -1,12 +1,20 @@
 const express = require("express");
 const app=express();
+const {isAdminAuth,isUserinAuth} = require("../middlewares/auth");
 
-app.get("/user",(req,res)=>{
-    res.send({firstName:"Praveen",lastName:"Udayagiri"});
+
+app.post("/user/login",(req,res)=>{
+    res.send("Login Sucessfull");
 })
-app.post("/user",(req,res)=>{
-    //logic for saving user data into Database
-    res.send("User added to DB sucessfully");
+app.use("/admin",isAdminAuth);
+app.use("/user/getdata",isUserinAuth,(req,res)=>{
+    res.send("Got User Data");
+});
+app.get("/admin/getData",(req,res)=>{
+    res.send("Got Admin Data ");
+})
+app.post("/admin/postdata",(req,res)=>{
+    res.send("Posted Admin Data");
 })
 app.use("/",(req,res)=>{
     res.send("Hello Default");
