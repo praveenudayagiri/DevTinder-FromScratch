@@ -12,6 +12,13 @@ const validateSignUpData = (req)=>{
     }
 }
 
+const validateEditProfileDate = (req)=>{
+    const UPDATE_ALLOWED = ["firstName","lastName","age","skills","about","photoUrl","gender"];
+    const isSafeToUpdate = Object.keys(req.body).every((key)=> UPDATE_ALLOWED.includes(key) );
+    return isSafeToUpdate;
+}
+
 module.exports = {
     validateSignUpData,
+    validateEditProfileDate,
 }
