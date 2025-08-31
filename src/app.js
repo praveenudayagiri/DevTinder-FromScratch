@@ -16,7 +16,7 @@ app.post("/signup",async(req,res)=>{
         res.send("User added Sucessfully");
     }
     catch(err){
-        res.status(400).send("Error saving the user");
+        res.status(400).send("Error saving the user: "+err);
     }
 })
 
@@ -52,17 +52,24 @@ app.delete("/user",async(req,res)=>{
     }
 })
 
-app.patch("/user",async(req,res)=>{
-    const userId = req.body._id;
+app.patch("/user/:userId",async(req,res)=>{
+    const userId = req.params.userId;
     const data = req.body;
     try{
+        const ALLOWED_UPDATES = ["photoUrl","about","gender","age","skills"];
+        const isUpdateAllowed = Object.keys(data).every((k)=> 
+            ALLOWED_UPDATES.includes(k)
+        );
+        if(!isUpdateAllowed){
+            throw new Error("Update not allowed");
+        }
         await User.findByIdAndUpdate({_id:userId},data,{
             runValidators:true,
         });
         res.send("User Details Updated Sucessfully");
     }
     catch(err){
-        res.status(404).send("Error while updating user details");
+        res.status(404).send("Error while updating user details: "+err);
     }
 })
 
