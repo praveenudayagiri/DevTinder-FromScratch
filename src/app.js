@@ -4,9 +4,13 @@ const connectDB = require("../config/database");
 const User=require("../config/user");
 const { validateSignUpData } = require("../utils/validation");
 const bcrypt = require("bcrypt");
+const jwt=require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const {isUserAuth} = require("../middlewares/auth");
+
 
 app.use(express.json());
-
+app.use(cookieParser());
 
 
 app.post("/signup",async(req,res)=>{
@@ -34,8 +38,10 @@ app.get("/login",async(req,res)=>{
         if(!user){
             throw new Error("Email does not exist");
         }
-        const isPasswordValid = bcrypt.compare(password,user.password);
+        const isPasswordValid = await bcrypt.compare(password,user.password);
         if(isPasswordValid){
+            const token = await jwt.sign({_id:user._id},"PRAVEEN@219",{ expiresIn:"7d" });
+            res.cookie("token",token,{expires:new Date(Date.now()+8*60*60*1000)});
             res.send("Login Sucessfull");
         }
         else res.status(400).send("Invalid Credentials");
@@ -45,56 +51,17 @@ app.get("/login",async(req,res)=>{
     }
 })
 
-app.get("/user",async(req,res)=>{
-    const userEmail = req.body.email;
-    try{
-        const user = await User.find({email:userEmail});
-        res.send(user);
-    }
-    catch(err){
-        res.status(404).send("Something went wrong");
-    }
-})
 
-app.get("/feed",async(req,res)=>{
+app.get("/profile",isUserAuth,async(req,res)=>{
     try{
-        const users = await User.find({});
-        res.send(users);
-    }
-    catch(err){
-        res.status(404).send("Error Fetching Users");
-    }
-})
-
-app.delete("/user",async(req,res)=>{
-    const userId = req.body._id;
-    try{
-        await User.deleteOne({_id:userId});
-        res.send("User deleted Sucessfully");
-    }
-    catch(err){
-        res.send(404).send("Error to delete user in Database");
-    }
-})
-
-app.patch("/user/:userId",async(req,res)=>{
-    const userId = req.params.userId;
-    const data = req.body;
-    try{
-        const ALLOWED_UPDATES = ["photoUrl","about","gender","age","skills"];
-        const isUpdateAllowed = Object.keys(data).every((k)=> 
-            ALLOWED_UPDATES.includes(k)
-        );
-        if(!isUpdateAllowed){
-            throw new Error("Update not allowed");
+        const user = req.user;
+        if(!user){
+            throw new Error("User does not exist");
         }
-        await User.findByIdAndUpdate({_id:userId},data,{
-            runValidators:true,
-        });
-        res.send("User Details Updated Sucessfully");
+        else res.send(user);
     }
     catch(err){
-        res.status(404).send("Error while updating user details: "+err);
+        res.send("Something went Wrong "+err);
     }
 })
 
