@@ -32,7 +32,7 @@ const userSchema = new Schema({
         }
     },
     age:{
-        type:String,
+        type:Number,
         min:18,
     },
     gender:{
