@@ -21,6 +21,8 @@ const connectionRequestSchema = new mongoose.Schema({
     },
 
 
+},{
+    timestamps:true
 })
 
 
