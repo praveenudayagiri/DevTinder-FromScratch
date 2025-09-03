@@ -3,6 +3,8 @@ const { isUserAuth } = require("../middlewares/auth");
 const userRouter = express.Router();
 const ConnectionRequest = require("../config/connectionrequest");
 const SAFETOSEND = "firstName lastName age about skills photoUrl gender"
+const User = require("../config/user");
+
 userRouter.get("/user/requests/received",isUserAuth,async(req,res)=>{
     try{
         const loggedInUser = req.user;
@@ -53,5 +55,46 @@ userRouter.get("/user/connections",isUserAuth,async(req,res)=>{
         res.status(400).send("Error fetching connections data: "+err.message);
     }
 })
+
+userRouter.get("/user/feed",isUserAuth,async(req,res)=>{
+    try{
+        const loggedInUser = req.user;
+        const page = parseInt(req.query.page) || 1;
+        let limit = parseInt(req.query.limit) || 10;
+        limit = limit > 50 ? 50 : limit;
+        const skip = (page - 1) * limit;
+
+
+        const connectionRequests = await ConnectionRequest.find({
+            $or:[
+                {fromUserId:loggedInUser._id},
+                {toUserId:loggedInUser._id}
+            ]
+        }).select("fromUserId toUserId")
+
+        const hideUsersFromFeed = new Set();
+        connectionRequests.forEach((req)=>{
+            hideUsersFromFeed.add(req.fromUserId.toString());
+            hideUsersFromFeed.add(req.toUserId.toString());
+        });
+
+        const users = await User.find({
+            $and:[
+                {_id:{$nin:Array.from(hideUsersFromFeed)}},
+                {_id:{$ne:loggedInUser._id}}
+            ]
+        }).select(SAFETOSEND)
+        .skip(skip)
+        .limit(limit);
+
+        res.json({data:users});
+
+
+    }
+    catch(err){
+        res.status(400).send("Error fetching data: "+err.message);
+    }
+})
+
 
 module.exports = userRouter;
