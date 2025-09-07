@@ -14,7 +14,10 @@ userRouter.get("/user/requests/received",isUserAuth,async(req,res)=>{
         }).populate("fromUserId", SAFETOSEND);
         
         
-        const formattedData = data.map(d => d.fromUserId); 
+            const formattedData = data.map((d) => ({
+                requestId: d._id,
+                user: d.fromUserId,
+            }));
 
         res.json({message:"Data Fetched Sucessfully",
             formattedData
@@ -27,7 +30,7 @@ userRouter.get("/user/requests/received",isUserAuth,async(req,res)=>{
 
 
 
-userRouter.get("/user/connections",isUserAuth,async(req,res)=>{
+userRouter.post("/user/connections",isUserAuth,async(req,res)=>{
     try{
             const loggedInUser = req.user;
     const connectionRequests = await ConnectionRequest.find({
@@ -56,7 +59,7 @@ userRouter.get("/user/connections",isUserAuth,async(req,res)=>{
     }
 })
 
-userRouter.get("/user/feed",isUserAuth,async(req,res)=>{
+userRouter.post("/user/feed",isUserAuth,async(req,res)=>{
     try{
         const loggedInUser = req.user;
         const page = parseInt(req.query.page) || 1;

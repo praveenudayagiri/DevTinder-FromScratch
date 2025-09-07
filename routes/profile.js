@@ -6,7 +6,7 @@ const {validateEditProfileDate} = require("../utils/validation");
 
 
 
-profileRouter.get("/profile/view",isUserAuth,async(req,res)=>{
+profileRouter.post("/profile/view",isUserAuth,async(req,res)=>{
     try{
         const user = req.user;
         if(!user){
@@ -15,7 +15,7 @@ profileRouter.get("/profile/view",isUserAuth,async(req,res)=>{
         else res.send(user);
     }
     catch(err){
-        res.send("Something went Wrong "+err);
+        res.send(err.message);
     }
 })
 
@@ -25,8 +25,13 @@ profileRouter.patch("/profile/edit",isUserAuth,async(req,res)=>{
             res.send("Edit request Denied");
         }
         else{
-            await User.findByIdAndUpdate(req.user._id,req.body,{ runValidators:true });
-            res.send("Updated profile Sucessfully");
+            const updatedUser = await User.findByIdAndUpdate(req.user._id,req.body,
+                {new:true, runValidators:true });
+
+                res.status(200).json({
+                    message: "Profile updated successfully",
+                    user: updatedUser,
+                });
         }
     }
     catch(err){
