@@ -9,7 +9,8 @@ const jwt=require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const {isUserAuth} = require("../middlewares/auth");
 const cors = require("cors");
-
+const http = require("http");
+const initializeSocket = require("../utils/sockets");
 app.use(cors({
     origin:"http://localhost:5173",
     credentials:true,
@@ -29,13 +30,14 @@ app.use("/",profileRouter);
 app.use("/",requestRouter);
 app.use("/",userRouter);
 
-
+const server = http.createServer(app);
+initializeSocket(server);
 
 
 connectDB().
 then(()=>{
     console.log("Database Connected Sucesssfully");
-    app.listen(7777, () => {
+    server.listen(7777, () => {
     console.log("Server is listening from port 7777");
     });
 });
