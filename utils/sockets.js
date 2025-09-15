@@ -1,9 +1,12 @@
 const socket = require("socket.io");
 const crypto = require("crypto");
+const { Chat } = require("../config/chat");
 
-const getRoomId = (id1, id2) => {
-  const raw = [id1, id2].sort().join("_");
-  return crypto.createHash("sha256").update(raw).digest("hex");
+const getRoomId = (userId, targetUserId) => {
+  return crypto
+    .createHash("sha256")
+    .update([userId, targetUserId].sort().join("$"))
+    .digest("hex");
 };
 
 const initializeSocket = (server) => {
@@ -14,26 +17,53 @@ const initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    socket.on("joinChat", ({ firstName, _id, targetId }) => {
-      const roomId = getRoomId(_id, targetId);
+    socket.on("joinChat", ({ firstName, userId, targetId }) => {
+      if (!userId || !targetId) {
+        console.log("joinChat missing ids", { userId, targetId });
+        return;
+      }
+      const roomId = getRoomId(userId, targetId);
       socket.join(roomId);
-      console.log(`${firstName} joined room ${roomId}`);
+        console.log(`${firstName} joined room ${roomId}`);
+        console.log("Current rooms:", socket.rooms);
+
     });
 
-    socket.on("sendMessage", ({ firstName, _id, targetId, text }) => {
-      const roomId = getRoomId(_id, targetId);
+    socket.on("sendMessage", async ({ firstName, lastName, userId, targetId, text }) => {
+      try {
+        if (!userId || !targetId) {
+          console.log("sendMessage missing ids", { userId, targetId });
+          return;
+        }
 
-      const message = {
-        senderId: _id,
-        senderName: firstName,
-        receiverId: targetId,
-        text,
-        time: new Date().toISOString(),
-      };
+        const roomId = getRoomId(userId, targetId);
 
-      console.log(`${firstName} sent a message to ${targetId}: ${text}`);
+        let chat = await Chat.findOne({
+          participants: { $all: [userId, targetId] },
+        });
 
-      io.to(roomId).emit("messageReceived", message);
+        if (!chat) {
+          chat = new Chat({
+            participants: [userId, targetId],
+            messages: [],
+          });
+        }
+
+        chat.messages.push({
+          senderId: userId,
+          text,
+        });
+
+        await chat.save();
+
+        io.to(roomId).emit("messageReceived", {
+          firstName,
+          lastName,
+          text,
+        });
+      } catch (err) {
+        console.error("Error in sendMessage:", err);
+      }
     });
 
     socket.on("disconnect", () => {
